@@ -7,6 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN chmod +x /app/start.sh
+
 ENV PYTHONPATH=/app/backend
 
-CMD ["sh", "-c", "cd /app/backend && python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+ENTRYPOINT ["/bin/bash", "/app/start.sh"]
