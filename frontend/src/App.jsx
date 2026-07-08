@@ -1,204 +1,379 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import SplashPage from './pages/SplashPage.jsx'
 import LandingPage from './pages/LandingPage.jsx'
+import SpaceDesignerPage from './pages/SpaceDesignerPage.jsx'
+import IdentityPage from './pages/IdentityPage.jsx'
+import FundingPage from './pages/FundingPage.jsx'
+import OpportunityPage from './pages/OpportunityPage.jsx'
+import { T, Card, Stat, Skeleton, Alert, fmt } from './components/UI.jsx'
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-function Stat({ label, value, color }) {
+// ─── Sidebar nav items ────────────────────────────────────────────────────────
+const NAV = [
+  { key: 'dashboard',   icon: '⬡', label: 'Dashboard',       color: T.orange },
+  { key: 'opportunity', icon: '🔍', label: 'Opportunity',     color: T.orange },
+  { key: 'identity',    icon: '👤', label: 'Identity',        color: T.purple },
+  { key: 'space',       icon: '📐', label: 'Space Designer',  color: T.gold   },
+  { key: 'funding',     icon: '💰', label: 'Funding',         color: T.teal   },
+]
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+function Sidebar({ page, onNavigate, onGoHome }) {
   return (
-    <div style={{background:'#06060f',borderRadius:6,padding:'0.7rem',textAlign:'center'}}>
-      <div style={{fontSize:'1rem',fontWeight:600,color:color||'#E8A020'}}>{value}</div>
-      <div style={{fontSize:'0.68rem',color:'#8a8070',marginTop:'0.2rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>{label}</div>
-    </div>
+    <aside className="sidebar" role="navigation" aria-label="Main navigation">
+      {/* Logo */}
+      <div
+        onClick={onGoHome}
+        style={{
+          padding: '1.4rem 1.2rem 1.2rem',
+          borderBottom: `0.5px solid ${T.border}`,
+          cursor: 'pointer',
+        }}
+      >
+        <svg width="72" height="28" viewBox="0 0 120 48">
+          <polyline
+            points="0,24 12,24 18,8 24,40 30,4 38,44 44,24 56,24 62,14 70,34 76,24 90,24 96,16 104,32 110,24 120,24"
+            fill="none" stroke={T.orange} strokeWidth="2.5"
+            strokeLinecap="round" strokeLinejoin="round"
+          />
+        </svg>
+        <div style={{
+          fontFamily: T.serif,
+          fontSize: '1.15rem',
+          fontWeight: 700,
+          background: `linear-gradient(135deg,${T.orange},${T.gold})`,
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          letterSpacing: '0.15em',
+          marginTop: '0.3rem',
+        }}>
+          SPANDAN
+        </div>
+        <div style={{ fontSize: '0.6rem', color: T.dim, letterSpacing: '0.25em', marginTop: 2 }}>
+          स्पन्दन · AI
+        </div>
+      </div>
+
+      {/* Nav items */}
+      <nav style={{ padding: '0.75rem 0.6rem', flex: 1 }}>
+        {NAV.map(({ key, icon, label, color }) => {
+          const active = page === key
+          return (
+            <button
+              key={key}
+              onClick={() => onNavigate(key)}
+              aria-current={active ? 'page' : undefined}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                padding: '0.6rem 0.85rem',
+                marginBottom: 2,
+                background: active ? `${color}18` : 'transparent',
+                border: `0.5px solid ${active ? `${color}60` : 'transparent'}`,
+                borderRadius: 8,
+                color: active ? color : T.muted,
+                fontSize: '0.82rem',
+                fontFamily: T.ff,
+                fontWeight: active ? 600 : 400,
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.background = T.s2 }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+            >
+              <span style={{ fontSize: '1rem', width: 20, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+              <span>{label}</span>
+            </button>
+          )
+        })}
+      </nav>
+
+      {/* Bottom */}
+      <div style={{
+        padding: '0.75rem 1rem',
+        borderTop: `0.5px solid ${T.border}`,
+        fontSize: '0.62rem',
+        color: T.dim,
+        letterSpacing: '0.1em',
+        lineHeight: 1.8,
+      }}>
+        <div>SPANDAN AI v3.0</div>
+        <div style={{ color: '#3a3444' }}>423+ pin codes · 34 states</div>
+        <button
+          onClick={onGoHome}
+          style={{
+            marginTop: 6,
+            fontSize: '0.62rem',
+            color: T.dim,
+            background: 'transparent',
+            border: `0.5px solid ${T.borderL}`,
+            padding: '2px 8px',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontFamily: T.ff,
+          }}
+        >
+          ↩ Home
+        </button>
+      </div>
+    </aside>
   )
 }
 
-function urgencyColor(u) {
-  return {critical:'#ff4444',high:'#FF6B00',medium:'#E8A020',low:'#00C9A7'}[u]||'#8a8070'
+// ─── Mobile bottom tab bar ────────────────────────────────────────────────────
+function MobileNav({ page, onNavigate }) {
+  return (
+    <nav className="mobile-nav" role="navigation" aria-label="Mobile navigation">
+      {NAV.map(({ key, icon, label, color }) => {
+        const active = page === key
+        return (
+          <button
+            key={key}
+            onClick={() => onNavigate(key)}
+            aria-current={active ? 'page' : undefined}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              gap: 3, padding: '0.4rem 0.5rem',
+              background: 'transparent', border: 'none',
+              color: active ? color : T.dim,
+              fontSize: '0.55rem',
+              fontFamily: T.ff,
+              cursor: 'pointer',
+              transition: 'color 0.15s',
+              flex: 1,
+            }}
+          >
+            <span style={{ fontSize: '1.2rem' }}>{icon}</span>
+            <span style={{ letterSpacing: '0.06em' }}>{label.split(' ')[0]}</span>
+          </button>
+        )
+      })}
+    </nav>
+  )
 }
 
-export default function App() {
-  const [showLanding, setShowLanding] = useState(true)
-  const [form, setForm] = useState({pincode:'',capital:'',skills:'any',isWoman:false,caste:'general',risk:'medium',name:''})
-  const [result, setResult] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [tab, setTab] = useState('scan')
-  const [cityData, setCityData] = useState(null)
-  const [cityLoading, setCityLoading] = useState(false)
-
-  if (showLanding) return <LandingPage onEnter={() => setShowLanding(false)} />
-
-  const scan = async () => {
-    if (!form.pincode || !form.capital) { setError('Enter pincode and capital'); return }
-    setLoading(true); setError(''); setResult(null)
-    try {
-      const res = await fetch(`${API}/api/opportunity/scan`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ pincode:form.pincode, capital:parseFloat(form.capital), skills:form.skills.split(',').map(s=>s.trim()), is_woman:form.isWoman, caste_category:form.caste, risk_appetite:form.risk, name:form.name||'User' })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.detail||'Error')
-      setResult(data)
-    } catch(e) { setError(e.message) }
-    finally { setLoading(false) }
-  }
-
-  const scanCity = async (city) => {
-    setCityLoading(true); setCityData(null)
-    try {
-      const res = await fetch(`${API}/api/opportunity/city/${city}`)
-      setCityData(await res.json())
-    } catch(e) { setError(e.message) }
-    finally { setCityLoading(false) }
-  }
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function DashboardPage({ onNavigate }) {
+  const modules = [
+    {
+      key: 'opportunity', icon: '🔍', label: 'Find My Opportunity',
+      desc: 'Scan any pincode, match your profile to the best business opportunity in that area',
+      color: T.orange, badge: 'Most Used',
+    },
+    {
+      key: 'identity', icon: '👤', label: 'Identity Profiler',
+      desc: 'Full opportunity analysis, scheme eligibility, career paths, skill gap insights',
+      color: T.purple,
+    },
+    {
+      key: 'space', icon: '📐', label: 'Space Designer',
+      desc: 'Autonomous floor plan generator — equipment layout, cost estimate for any business',
+      color: T.gold, badge: 'AI Generated',
+    },
+    {
+      key: 'funding', icon: '💰', label: 'Funding Finder',
+      desc: '12 govt schemes including MUDRA, SVANidhi, PMEGP — with live EMI calculator',
+      color: T.teal,
+    },
+  ]
 
   return (
-    <div style={{maxWidth:820,margin:'0 auto',padding:'1.5rem 1rem'}}>
-      <div style={{textAlign:'center',marginBottom:'2rem',paddingBottom:'1.5rem',borderBottom:'0.5px solid #1e1a2e'}}>
-        <div style={{fontSize:'2.2rem',fontWeight:700,fontFamily:"'Cinzel',serif",background:'linear-gradient(135deg,#FF6B00,#E8A020)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',letterSpacing:'0.12em'}}>SPANDAN AI</div>
-        <div style={{color:'#8a8070',fontSize:'0.85rem',letterSpacing:'0.25em',marginTop:'0.3rem'}}>स्पन्दन · भारत की धड़कन</div>
-        <button onClick={()=>setShowLanding(true)} style={{marginTop:'0.5rem',background:'transparent',border:'0.5px solid #1e1a2e',color:'#5a4050',padding:'0.3rem 0.8rem',borderRadius:4,fontSize:'0.7rem',cursor:'pointer',letterSpacing:'0.1em'}}>← Back to home</button>
+    <div className="page-wrap fade-in">
+      {/* Hero */}
+      <div style={{ textAlign: 'center', padding: '2rem 1rem 2.5rem', borderBottom: `0.5px solid ${T.border}`, marginBottom: '2rem' }}>
+        <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <svg width="88" height="34" viewBox="0 0 120 48">
+            <polyline
+              points="0,24 12,24 18,8 24,40 30,4 38,44 44,24 56,24 62,14 70,34 76,24 90,24 96,16 104,32 110,24 120,24"
+              fill="none" stroke={T.orange} strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round"
+            />
+          </svg>
+          <div style={{
+            fontFamily: T.serif,
+            fontSize: 'clamp(2rem, 5vw, 3rem)',
+            fontWeight: 700,
+            background: `linear-gradient(135deg,${T.orange},${T.gold},#F5C842)`,
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            letterSpacing: '0.15em',
+            lineHeight: 1,
+          }}>
+            SPANDAN
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: '0.88rem', color: T.muted, letterSpacing: '0.3em' }}>
+            स्पन्दन · AI
+          </div>
+          <div style={{ fontSize: '0.72rem', color: T.teal, letterSpacing: '0.2em' }}>
+            भारत की धड़कन · India's Pulse
+          </div>
+        </div>
+        <p style={{ fontSize: '0.9rem', color: T.muted, maxWidth: 480, margin: '1.5rem auto 0', lineHeight: 1.8 }}>
+          Every corner of India holds an opportunity. SPANDAN finds it, designs it, and funds it.
+        </p>
       </div>
 
-      <div style={{display:'flex',gap:'0.5rem',marginBottom:'1.5rem'}}>
-        {['scan','city'].map(t=>(
-          <button key={t} onClick={()=>setTab(t)} style={{padding:'0.5rem 1.2rem',borderRadius:6,border:'0.5px solid',cursor:'pointer',fontSize:'0.82rem',letterSpacing:'0.08em',textTransform:'uppercase',fontWeight:500,background:tab===t?'#FF6B00':'transparent',color:tab===t?'white':'#8a8070',borderColor:tab===t?'#FF6B00':'#1e1a2e'}}>
-            {t==='scan'?'Find My Opportunity':'City Map'}
+      {/* Module grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
+        {modules.map(m => (
+          <button
+            key={m.key}
+            onClick={() => onNavigate(m.key)}
+            style={{
+              background: T.s1,
+              border: `0.5px solid ${T.border}`,
+              borderRadius: 12,
+              padding: '1.4rem',
+              textAlign: 'left',
+              cursor: 'pointer',
+              fontFamily: T.ff,
+              transition: 'border-color 0.15s, background 0.15s',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = m.color
+              e.currentTarget.style.background = T.s2
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = T.border
+              e.currentTarget.style.background = T.s1
+            }}
+          >
+            {m.badge && (
+              <div style={{
+                position: 'absolute', top: 12, right: 12,
+                fontSize: '0.58rem', color: m.color,
+                border: `0.5px solid ${m.color}50`,
+                padding: '2px 7px', borderRadius: 4,
+                letterSpacing: '0.08em', textTransform: 'uppercase',
+              }}>
+                {m.badge}
+              </div>
+            )}
+            <span style={{ fontSize: '1.8rem' }}>{m.icon}</span>
+            <div style={{ fontSize: '0.92rem', fontWeight: 600, color: m.color }}>{m.label}</div>
+            <div style={{ fontSize: '0.75rem', color: T.muted, lineHeight: 1.6 }}>{m.desc}</div>
+            <div style={{ fontSize: '0.72rem', color: m.color, marginTop: 4, opacity: 0.7 }}>
+              Open →
+            </div>
           </button>
         ))}
       </div>
 
-      {tab==='scan' && (
-        <div>
-          <div style={{background:'#0d0d1a',border:'0.5px solid #1e1a2e',borderRadius:12,padding:'1.5rem',marginBottom:'1.5rem'}}>
-            <h2 style={{fontSize:'1rem',color:'#F5EDD8',marginBottom:'1.2rem'}}>Tell us about yourself</h2>
-            <div style={{display:'grid',gap:'1rem',gridTemplateColumns:'1fr 1fr'}}>
-              {[['Your Name','name','text','e.g. Raju Kumar'],['Pin Code','pincode','text','e.g. 560037'],['Capital (Rs.)','capital','number','e.g. 50000'],['Skills','skills','text','cooking, selling, any']].map(([label,field,type,ph])=>(
-                <div key={field}>
-                  <label style={{display:'block',fontSize:'0.72rem',color:'#8a8070',marginBottom:'0.35rem',letterSpacing:'0.12em',textTransform:'uppercase'}}>{label}</label>
-                  <input type={type} value={form[field]} onChange={e=>setForm({...form,[field]:e.target.value})} placeholder={ph}
-                    style={{width:'100%',padding:'0.65rem',background:'#06060f',border:'0.5px solid #1e1a2e',borderRadius:6,color:'#F5EDD8',fontSize:'0.9rem'}}/>
-                </div>
-              ))}
-              <div>
-                <label style={{display:'block',fontSize:'0.72rem',color:'#8a8070',marginBottom:'0.35rem',letterSpacing:'0.12em',textTransform:'uppercase'}}>Risk Appetite</label>
-                <select value={form.risk} onChange={e=>setForm({...form,risk:e.target.value})} style={{width:'100%',padding:'0.65rem',background:'#06060f',border:'0.5px solid #1e1a2e',borderRadius:6,color:'#F5EDD8',fontSize:'0.9rem'}}>
-                  <option value="low">Low — Safe and steady</option>
-                  <option value="medium">Medium — Balanced</option>
-                  <option value="high">High — Growth focused</option>
-                </select>
-              </div>
-              <div>
-                <label style={{display:'block',fontSize:'0.72rem',color:'#8a8070',marginBottom:'0.35rem',letterSpacing:'0.12em',textTransform:'uppercase'}}>Category</label>
-                <select value={form.caste} onChange={e=>setForm({...form,caste:e.target.value})} style={{width:'100%',padding:'0.65rem',background:'#06060f',border:'0.5px solid #1e1a2e',borderRadius:6,color:'#F5EDD8',fontSize:'0.9rem'}}>
-                  <option value="general">General</option>
-                  <option value="obc">OBC</option>
-                  <option value="sc">SC</option>
-                  <option value="st">ST</option>
-                </select>
-              </div>
+      {/* Stats strip */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4,1fr)',
+        gap: 1,
+        background: '#131124',
+        border: `1px solid #131124`,
+        borderRadius: 10,
+        overflow: 'hidden',
+        marginBottom: '2rem',
+      }}>
+        {[
+          ['423+', 'Pin Codes', T.orange],
+          ['12+', 'Govt Schemes', T.teal],
+          ['14', 'Business Types', T.gold],
+          ['₹0', 'Cost to Use', T.purple],
+        ].map(([n, l, c]) => (
+          <div key={l} style={{ background: T.s1, padding: '1.2rem 0.75rem', textAlign: 'center' }}>
+            <div style={{
+              fontFamily: T.serif, fontSize: '1.4rem', fontWeight: 700,
+              background: `linear-gradient(135deg,${c},${T.gold})`,
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              marginBottom: 4,
+            }}>
+              {n}
             </div>
-            <div style={{marginTop:'1rem',display:'flex',alignItems:'center',gap:'0.5rem'}}>
-              <input type="checkbox" id="woman" checked={form.isWoman} onChange={e=>setForm({...form,isWoman:e.target.checked})} style={{accentColor:'#FF6B00'}}/>
-              <label htmlFor="woman" style={{fontSize:'0.82rem',color:'#8a8070',cursor:'pointer'}}>Woman entrepreneur — unlocks special schemes</label>
-            </div>
-            {error && <div style={{marginTop:'0.8rem',padding:'0.6rem',background:'#1a0606',border:'0.5px solid #ff4444',borderRadius:6,color:'#ff8080',fontSize:'0.82rem'}}>{error}</div>}
-            <button onClick={scan} disabled={loading} style={{marginTop:'1.2rem',width:'100%',padding:'0.85rem',background:loading?'#2a2030':'linear-gradient(135deg,#FF6B00,#E8A020)',color:'white',border:'none',borderRadius:6,fontSize:'0.92rem',fontWeight:600,cursor:loading?'not-allowed':'pointer',letterSpacing:'0.08em',textTransform:'uppercase'}}>
-              {loading?'Reading India pulse...':'Find My Opportunity →'}
-            </button>
+            <div style={{ fontSize: '0.6rem', color: T.dim, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{l}</div>
           </div>
+        ))}
+      </div>
 
-          {result && (
-            <div>
-              <div style={{background:'#0d0d1a',border:'0.5px solid #1e1a2e',borderRadius:12,padding:'1.5rem',marginBottom:'1.2rem'}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:'1rem'}}>
-                  <div>
-                    <div style={{fontSize:'1.4rem',fontWeight:700,color:'#FF6B00',fontFamily:"'Cinzel',serif"}}>{result.city}</div>
-                    <div style={{color:'#8a8070',fontSize:'0.82rem',marginTop:'0.2rem'}}>{result.state} · Pin {result.pincode} · Pop {result.population?.toLocaleString()}</div>
-                    <div style={{color:'#00C9A7',fontSize:'0.82rem',marginTop:'0.5rem'}}>{result.message_hindi}</div>
-                  </div>
-                  <div style={{textAlign:'center',background:'#06060f',padding:'1rem 1.5rem',borderRadius:8,minWidth:100}}>
-                    <div style={{fontSize:'2rem',fontWeight:700,color:'#E8A020',fontFamily:"'Cinzel',serif"}}>{result.opportunity_score}</div>
-                    <div style={{fontSize:'0.65rem',color:'#8a8070',letterSpacing:'0.1em',textTransform:'uppercase'}}>Opportunity Score</div>
-                  </div>
-                </div>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))',gap:'0.6rem',marginTop:'1rem'}}>
-                  <Stat label="Income Level" value={result.income_tier?.replace('_',' ')} color="#00C9A7"/>
-                  <Stat label="Gaps Found" value={result.top_gaps?.length+'+'}/>
-                  <Stat label="Matches" value={result.matched_businesses?.length}/>
-                  <Stat label="Population" value={(result.population/1000).toFixed(0)+'K'}/>
-                </div>
-              </div>
-
-              <h3 style={{fontSize:'0.82rem',color:'#8a8070',letterSpacing:'0.2em',textTransform:'uppercase',marginBottom:'0.8rem'}}>Your Best Matches</h3>
-              {result.matched_businesses?.map((biz,i)=>(
-                <div key={i} style={{background:'#0d0d1a',border:`0.5px solid ${i===0?'#FF6B00':'#1e1a2e'}`,borderRadius:12,padding:'1.2rem',marginBottom:'0.8rem'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.8rem',flexWrap:'wrap',gap:'0.5rem'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:'0.6rem'}}>
-                      <span style={{fontSize:'1rem',fontWeight:600,color:'#F5EDD8',textTransform:'capitalize'}}>{biz.business_type.replace(/_/g,' ')}</span>
-                      {i===0 && <span style={{fontSize:'0.65rem',background:'#FF6B00',color:'white',padding:'2px 7px',borderRadius:4}}>BEST MATCH</span>}
-                    </div>
-                    <span style={{fontSize:'1.1rem',fontWeight:700,color:'#E8A020'}}>{Math.round(biz.match_score*100)}%</span>
-                  </div>
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))',gap:'0.5rem',marginBottom:'0.8rem'}}>
-                    <Stat label="Monthly Revenue" value={`Rs.${(biz.monthly_revenue/1000).toFixed(0)}K`}/>
-                    <Stat label="Capital Needed" value={`Rs.${(biz.capital_needed/1000).toFixed(0)}K`}/>
-                    <Stat label="Capital Gap" value={biz.capital_gap>0?`Rs.${(biz.capital_gap/1000).toFixed(0)}K`:'None'} color={biz.capital_gap===0?'#00C9A7':'#ff8080'}/>
-                    <Stat label="Success" value={biz.success_probability.split(' ')[0]+' '+biz.success_probability.split(' ')[1]} color="#00C9A7"/>
-                  </div>
-                  <div style={{fontSize:'0.78rem',color:'#00C9A7',marginBottom:'0.6rem'}}>📍 {biz.location_advice}</div>
-                  <div style={{marginBottom:'0.6rem'}}>
-                    {biz.setup_steps?.slice(0,3).map((s,j)=>(
-                      <div key={j} style={{fontSize:'0.78rem',color:'#9a9080',marginBottom:'0.2rem'}}>✓ {s}</div>
-                    ))}
-                  </div>
-                  <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap'}}>
-                    {biz.funding_schemes?.slice(0,2).map((s,j)=>(
-                      <span key={j} style={{fontSize:'0.68rem',background:'#0a1a14',color:'#00C9A7',border:'0.5px solid #0f3028',padding:'3px 8px',borderRadius:4}}>💰 {s}</span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      {/* Quick actions */}
+      <div style={{ borderTop: `0.5px solid ${T.border}`, paddingTop: '1.5rem' }}>
+        <div style={{ fontSize: '0.65rem', color: T.dim, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '0.8rem' }}>
+          Quick Start
         </div>
-      )}
-
-      {tab==='city' && (
-        <div>
-          <div style={{background:'#0d0d1a',border:'0.5px solid #1e1a2e',borderRadius:12,padding:'1.5rem',marginBottom:'1.5rem'}}>
-            <h2 style={{fontSize:'1rem',color:'#F5EDD8',marginBottom:'1rem'}}>Scan an Entire City</h2>
-            <div style={{display:'flex',gap:'0.5rem',flexWrap:'wrap'}}>
-              {['bangalore','mumbai','delhi','hyderabad','chennai'].map(city=>(
-                <button key={city} onClick={()=>scanCity(city)} style={{padding:'0.6rem 1.2rem',borderRadius:6,border:'0.5px solid #2a2040',background:'#06060f',color:'#F5EDD8',cursor:'pointer',fontSize:'0.82rem',textTransform:'capitalize',fontWeight:500}}>
-                  {city.charAt(0).toUpperCase()+city.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-          {cityLoading && <div style={{textAlign:'center',color:'#8a8070',padding:'2rem'}}>Scanning city pulse...</div>}
-          {cityData && Object.entries(cityData.results||{}).map(([pin,data])=>(
-            <div key={pin} style={{background:'#0d0d1a',border:'0.5px solid #1e1a2e',borderRadius:12,padding:'1.2rem',marginBottom:'0.8rem'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.8rem',flexWrap:'wrap',gap:'0.5rem'}}>
-                <div style={{fontWeight:600,color:'#F5EDD8'}}>Pin Code {pin}</div>
-                <div><span style={{fontSize:'1.3rem',fontWeight:700,color:'#E8A020'}}>{data.opportunity_score}</span><span style={{fontSize:'0.68rem',color:'#8a8070',marginLeft:'0.3rem'}}>score</span></div>
-              </div>
-              <div style={{display:'flex',gap:'0.4rem',flexWrap:'wrap'}}>
-                {data.top_gaps?.map((gap,j)=>(
-                  <span key={j} style={{fontSize:'0.68rem',background:'#06060f',color:urgencyColor(gap.urgency),border:`0.5px solid ${urgencyColor(gap.urgency)}30`,padding:'3px 8px',borderRadius:4,textTransform:'capitalize'}}>
-                    {gap.type.replace(/_/g,' ')} · Rs.{(gap.revenue/1000).toFixed(0)}K
-                  </span>
-                ))}
-              </div>
-            </div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {[
+            ['🎯 Find opportunity in 560037', 'opportunity'],
+            ['💡 Check MUDRA eligibility', 'funding'],
+            ['🏗️ Design a tea stall layout', 'space'],
+          ].map(([label, page]) => (
+            <button
+              key={label}
+              onClick={() => onNavigate(page)}
+              style={{
+                fontSize: '0.75rem', color: T.muted,
+                background: T.s2,
+                border: `0.5px solid ${T.border}`,
+                padding: '0.4rem 0.9rem', borderRadius: 6,
+                cursor: 'pointer', fontFamily: T.ff,
+                transition: 'border-color 0.15s, color 0.15s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = T.orange
+                e.currentTarget.style.color = T.text
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = T.border
+                e.currentTarget.style.color = T.muted
+              }}
+            >
+              {label}
+            </button>
           ))}
         </div>
-      )}
+      </div>
 
-      <div style={{textAlign:'center',marginTop:'3rem',paddingTop:'1.5rem',borderTop:'0.5px solid #1e1a2e'}}>
-        <div style={{fontSize:'0.72rem',color:'#3a3040',letterSpacing:'0.15em'}}>SPANDAN AI · स्पन्दन · Building prosperity, one pin code at a time</div>
+      {/* Footer note */}
+      <div style={{ textAlign: 'center', marginTop: '3rem', fontSize: '0.62rem', color: '#2a2438' }}>
+        SPANDAN AI · स्पन्दन · 34 states · 423 pin codes · Aligned to UN SDG 1, 8
       </div>
     </div>
   )
+}
+
+// ─── App Shell (sidebar + content) ───────────────────────────────────────────
+function AppShell({ page, setPage }) {
+  const goHome = useCallback(() => setPage('landing'), [setPage])
+
+  const renderPage = () => {
+    switch (page) {
+      case 'dashboard':   return <DashboardPage onNavigate={setPage} />
+      case 'opportunity': return <OpportunityPage onBack={() => setPage('dashboard')} />
+      case 'space':       return <SpaceDesignerPage onBack={() => setPage('dashboard')} />
+      case 'identity':    return <IdentityPage onBack={() => setPage('dashboard')} />
+      case 'funding':     return <FundingPage onBack={() => setPage('dashboard')} />
+      default:            return <DashboardPage onNavigate={setPage} />
+    }
+  }
+
+  return (
+    <div className="app-shell">
+      <Sidebar page={page} onNavigate={setPage} onGoHome={goHome} />
+      <main className="content-pane" role="main">
+        {renderPage()}
+      </main>
+      <MobileNav page={page} onNavigate={setPage} />
+    </div>
+  )
+}
+
+// ─── Root ────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [page, setPage] = useState('splash')
+
+  if (page === 'splash') return <SplashPage onEnter={() => setPage('landing')} />
+  if (page === 'landing') return <LandingPage onEnter={() => setPage('dashboard')} />
+
+  // All app pages rendered inside the shell
+  return <AppShell page={page} setPage={setPage} />
 }

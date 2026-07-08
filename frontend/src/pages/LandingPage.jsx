@@ -48,13 +48,13 @@ export default function LandingPage({ onEnter }) {
         <div style={{fontFamily:"'Cinzel',serif",fontSize:'1.3rem',fontWeight:700,background:'linear-gradient(135deg,#FF6B00,#E8A020)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',letterSpacing:'0.12em'}}>
           SPANDAN AI
         </div>
-        <div style={{display:'flex',gap:'1.5rem'}}>
-          {['How it works','For whom','Impact','Schemes'].map(l=>(
-            <span key={l} style={{fontSize:'0.82rem',color:'#8a8070',letterSpacing:'0.08em',textTransform:'uppercase',cursor:'pointer'}}>{l}</span>
+        <div style={{display:'flex',gap:'1.5rem',flexWrap:'wrap'}}>
+          {['Find Opportunity','Identity Profiler','Space Designer','Funding'].map(l=>(
+            <span key={l} style={{fontSize:'0.78rem',color:'#8a8070',letterSpacing:'0.08em',textTransform:'uppercase',cursor:'pointer'}}>{l}</span>
           ))}
         </div>
         <button onClick={onEnter} style={{background:'#FF6B00',color:'white',border:'none',padding:'0.5rem 1.2rem',borderRadius:4,fontSize:'0.82rem',fontWeight:500,letterSpacing:'0.08em',cursor:'pointer'}}>
-          Get started ↗
+          Enter Platform ↗
         </button>
       </nav>
 
@@ -90,7 +90,7 @@ export default function LandingPage({ onEnter }) {
       {/* ── Stats ── */}
       <section style={{padding:'2.5rem 2rem',background:'#0a0a12'}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:1,background:'#1a1628',border:'1px solid #1a1628',borderRadius:8,overflow:'hidden',maxWidth:640,margin:'0 auto'}}>
-          {[['19K+','Pin codes scanned'],['63M','MSMEs in India'],['Rs.0','Cost to find'],['22','Indian languages']].map(([n,l])=>(
+          {[['423+','Pin codes loaded'],['34','States / UTs'],['14','Business layouts'],['₹0','Cost to use']].map(([n,l])=>(
             <div key={l} style={{background:'#0d0d1a',padding:'1.5rem 1rem',textAlign:'center'}}>
               <span style={{fontFamily:"'Cinzel',serif",fontSize:'1.8rem',fontWeight:700,background:'linear-gradient(135deg,#FF6B00,#E8A020)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',display:'block',marginBottom:'0.3rem'}}>{n}</span>
               <span style={{fontSize:'0.72rem',color:'#8a8070',letterSpacing:'0.12em',textTransform:'uppercase',lineHeight:1.4}}>{l}</span>
@@ -105,12 +105,12 @@ export default function LandingPage({ onEnter }) {
         <p style={{fontSize:'0.82rem',color:'#8a8070',textAlign:'center',marginBottom:'2.5rem',letterSpacing:'0.08em'}}>कैसे काम करता है · From pulse to prosperity</p>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:'1rem',maxWidth:640,margin:'0 auto'}}>
           {[
-            ['STEP 01','📍','Share location','Tell us where you are. GPS auto-detects your pin code anywhere in India.'],
-            ['STEP 02','💰','Share capital','From Rs.5,000 to Rs.50 lakh — every level gets the right opportunity.'],
-            ['STEP 03','🧠','AI reads pulse','SPANDAN scans 10+ data sources — census, maps, delivery data, finance.'],
+            ['STEP 01','📍','Share location','Tell us where you are. 200+ India pin codes with full demographic data.'],
+            ['STEP 02','👤','Build identity','Your skills, capital, education, category — AI profiles your full opportunity.'],
+            ['STEP 03','🧠','AI reads pulse','SPANDAN scans demographics, existing businesses, demand ratios, income tiers.'],
             ['STEP 04','🎯','Your opportunity','Exact location, exact business, exact revenue estimate. No guessing.'],
-            ['STEP 05','💳','Funding match','MUDRA, PM SVANidhi, PMEGP — AI finds your best scheme instantly.'],
-            ['STEP 06','🏪','Start business','Complete setup guide, shop design, first week action plan. Begin.'],
+            ['STEP 05','🏗️','Design your space','Autonomous floor plan, equipment layout, cost estimate — for any business type.'],
+            ['STEP 06','💳','Funding match','MUDRA, PM SVANidhi, PMEGP — 12+ schemes matched instantly with EMI calculator.'],
           ].map(([num,icon,title,desc])=>(
             <div key={num} style={{background:'#0d0d1a',border:'0.5px solid #1e1a2e',borderRadius:8,padding:'1.5rem 1rem',textAlign:'center'}}>
               <div style={{fontFamily:"'Cinzel',serif",fontSize:'0.7rem',color:'#FF6B00',letterSpacing:'0.2em',marginBottom:'0.8rem',opacity:0.7}}>{num}</div>

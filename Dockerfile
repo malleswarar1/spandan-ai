@@ -2,12 +2,14 @@ FROM python:3.11-slim
 
 WORKDIR /app/backend
 
-COPY requirements.txt ../
-RUN pip install --no-cache-dir -r ../requirements.txt
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . ..
+COPY backend/ .
+COPY ai_engine/ /app/ai_engine/
 
-ENV PYTHONPATH=/app/backend
+# Both backend (for api.*, main) and /app (for ai_engine.*) must be resolvable
+ENV PYTHONPATH=/app/backend:/app
 
 EXPOSE 8080
 

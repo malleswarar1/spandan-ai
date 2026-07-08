@@ -84,7 +84,7 @@ export default function SplashPage({ onEnter }) {
 
       {/* Stats */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,width:'100%',maxWidth:520,marginBottom:'1.5rem'}}>
-        {[['19K+','Pin codes'],['63M','MSMEs'],['Rs.0','Cost'],['22','Languages']].map(([n,l])=>(
+        {[['423+','Pin codes'],['34','States / UTs'],['14','Layouts'],['₹0','Cost']].map(([n,l])=>(
           <div key={l} style={{background:'#0d0b18',border:'0.5px solid #1e1628',borderRadius:8,padding:'0.8rem 0.4rem',textAlign:'center'}}>
             <div style={{fontFamily:"'Cinzel',serif",fontSize:'1.1rem',fontWeight:700,color:'#E8A020'}}>{n}</div>
             <div style={{fontSize:'0.6rem',color:'#4a4050',letterSpacing:'0.08em',textTransform:'uppercase',marginTop:2,lineHeight:1.3}}>{l}</div>
